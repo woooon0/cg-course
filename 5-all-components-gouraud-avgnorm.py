@@ -13,37 +13,19 @@ g_vertex_shader_src = '''
 layout (location = 0) in vec3 vin_pos; 
 layout (location = 1) in vec3 vin_normal; 
 
-out vec3 vout_surface_pos;
-out vec3 vout_normal;
+out vec4 vout_color;
 
 uniform mat4 MVP;
 uniform mat4 M;
+uniform vec3 view_pos;
 
 void main()
 {
     vec4 p3D_in_hcoord = vec4(vin_pos.xyz, 1.0);
     gl_Position = MVP * p3D_in_hcoord;
 
-    vout_surface_pos = vec3(M * vec4(vin_pos, 1));
-    vout_normal = normalize( mat3(inverse(transpose(M)) ) * vin_normal);
-}
-'''
-
-g_fragment_shader_src = '''
-#version 330 core
-
-in vec3 vout_surface_pos;
-in vec3 vout_normal;  // interpolated normal
-
-out vec4 FragColor;
-
-uniform vec3 view_pos;
-uniform vec3 lightmove;
-
-void main()
-{
     // light and material properties
-    vec3 light_pos = lightmove;
+    vec3 light_pos = vec3(3,2,4);
     vec3 light_color = vec3(1,1,1);
     vec3 material_color = vec3(1,0,0);
     float material_shininess = 32.0;
@@ -62,8 +44,8 @@ void main()
     vec3 ambient = light_ambient * material_ambient;
 
     // for diffiuse and specular
-    vec3 normal = normalize(vout_normal);
-    vec3 surface_pos = vout_surface_pos;
+    vec3 normal = normalize( mat3(inverse(transpose(M)) ) * vin_normal);
+    vec3 surface_pos = vec3(M * vec4(vin_pos, 1));
     vec3 light_dir = normalize(light_pos - surface_pos);
 
     // diffuse
@@ -77,7 +59,20 @@ void main()
     vec3 specular = spec * light_specular * material_specular;
 
     vec3 color = ambient + diffuse + specular;
-    FragColor = vec4(color, 1.);
+    vout_color = vec4(color, 1.);
+}
+'''
+
+g_fragment_shader_src = '''
+#version 330 core
+
+in vec4 vout_color;  // interpolated color
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vout_color;
 }
 '''
 
@@ -142,56 +137,34 @@ def key_callback(window, key, scancode, action, mods):
 
 def prepare_vao_cube():
     # prepare vertex data (in main memory)
-    # 36 vertices for 12 triangles
+    # 8 vertices
     vertices = glm.array(glm.float32,
         # position      normal
-        -1 ,  1 ,  1 ,  0, 0, 1, # v0
-         1 , -1 ,  1 ,  0, 0, 1, # v2
-         1 ,  1 ,  1 ,  0, 0, 1, # v1
+        -1 ,  1 ,  1 , -0.577 ,  0.577,  0.577, # v0
+         1 ,  1 ,  1 ,  0.816 ,  0.408,  0.408, # v1
+         1 , -1 ,  1 ,  0.408 , -0.408,  0.816, # v2
+        -1 , -1 ,  1 , -0.408 , -0.816,  0.408, # v3
+        -1 ,  1 , -1 , -0.408 ,  0.408, -0.816, # v4
+         1 ,  1 , -1 ,  0.408 ,  0.816, -0.408, # v5
+         1 , -1 , -1 ,  0.577 , -0.577, -0.577, # v6
+        -1 , -1 , -1 , -0.816 , -0.408, -0.408, # v7
+    )
 
-        -1 ,  1 ,  1 ,  0, 0, 1, # v0
-        -1 , -1 ,  1 ,  0, 0, 1, # v3
-         1 , -1 ,  1 ,  0, 0, 1, # v2
-
-        -1 ,  1 , -1 ,  0, 0,-1, # v4
-         1 ,  1 , -1 ,  0, 0,-1, # v5
-         1 , -1 , -1 ,  0, 0,-1, # v6
-
-        -1 ,  1 , -1 ,  0, 0,-1, # v4
-         1 , -1 , -1 ,  0, 0,-1, # v6
-        -1 , -1 , -1 ,  0, 0,-1, # v7
-
-        -1 ,  1 ,  1 ,  0, 1, 0, # v0
-         1 ,  1 ,  1 ,  0, 1, 0, # v1
-         1 ,  1 , -1 ,  0, 1, 0, # v5
-
-        -1 ,  1 ,  1 ,  0, 1, 0, # v0
-         1 ,  1 , -1 ,  0, 1, 0, # v5
-        -1 ,  1 , -1 ,  0, 1, 0, # v4
- 
-        -1 , -1 ,  1 ,  0,-1, 0, # v3
-         1 , -1 , -1 ,  0,-1, 0, # v6
-         1 , -1 ,  1 ,  0,-1, 0, # v2
-
-        -1 , -1 ,  1 ,  0,-1, 0, # v3
-        -1 , -1 , -1 ,  0,-1, 0, # v7
-         1 , -1 , -1 ,  0,-1, 0, # v6
-
-         1 ,  1 ,  1 ,  1, 0, 0, # v1
-         1 , -1 ,  1 ,  1, 0, 0, # v2
-         1 , -1 , -1 ,  1, 0, 0, # v6
-
-         1 ,  1 ,  1 ,  1, 0, 0, # v1
-         1 , -1 , -1 ,  1, 0, 0, # v6
-         1 ,  1 , -1 ,  1, 0, 0, # v5
-
-        -1 ,  1 ,  1 , -1, 0, 0, # v0
-        -1 , -1 , -1 , -1, 0, 0, # v7
-        -1 , -1 ,  1 , -1, 0, 0, # v3
-
-        -1 ,  1 ,  1 , -1, 0, 0, # v0
-        -1 ,  1 , -1 , -1, 0, 0, # v4
-        -1 , -1 , -1 , -1, 0, 0, # v7
+    # prepare index data
+    # 12 triangles
+    indices = glm.array(glm.uint32,
+        0,2,1,
+        0,3,2,
+        4,5,6,
+        4,6,7,
+        0,1,5,
+        0,5,4,
+        3,6,2,
+        3,7,6,
+        1,2,6,
+        1,6,5,
+        0,7,3,
+        0,4,7,
     )
 
     # create and activate VAO (vertex array object)
@@ -202,8 +175,15 @@ def prepare_vao_cube():
     VBO = glGenBuffers(1)   # create a buffer object ID and store it to VBO variable
     glBindBuffer(GL_ARRAY_BUFFER, VBO)  # activate VBO as a vertex buffer object
 
+    # create and activate EBO (element buffer object)
+    EBO = glGenBuffers(1)   # create a buffer object ID and store it to EBO variable
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)  # activate EBO as an element buffer object
+
     # copy vertex data to VBO
     glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices.ptr, GL_STATIC_DRAW) # allocate GPU memory for and copy vertex data to the currently bound vertex buffer
+
+    # copy index data to EBO
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices.ptr, GL_STATIC_DRAW) # allocate GPU memory for and copy index data to the currently bound element buffer
 
     # configure vertex positions
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * glm.sizeof(glm.float32), None)
@@ -215,6 +195,7 @@ def prepare_vao_cube():
 
     return VAO
 
+
 def main():
     # initialize glfw
     if not glfwInit():
@@ -225,7 +206,7 @@ def main():
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE) # for macOS
 
     # create a window and OpenGL context
-    window = glfwCreateWindow(800, 800, '2023008413', None, None)
+    window = glfwCreateWindow(800, 800, '5-all-components-gouraud-avgnorm', None, None)
     if not window:
         glfwTerminate()
         return
@@ -241,8 +222,7 @@ def main():
     loc_MVP = glGetUniformLocation(shader_program, 'MVP')
     loc_M = glGetUniformLocation(shader_program, 'M')
     loc_view_pos = glGetUniformLocation(shader_program, 'view_pos')
-    loc_lightmov = glGetUniformLocation(shader_program, 'lightmove')
-
+    
     # prepare vaos
     vao_cube = prepare_vao_cube()
 
@@ -252,8 +232,11 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
 
+        glUseProgram(shader_program)
+
         # projection matrix
-        P = glm.perspective(45, 1, 1, 20)
+        P = glm.perspective(45, 1, 1, 10)
+
 
         # view matrix
         view_pos = glm.vec3(5*np.sin(g_cam_ang),g_cam_height,5*np.cos(g_cam_ang))
@@ -266,8 +249,6 @@ def main():
         # rotation
         th = np.radians(t*90)
         R = glm.rotate(th, glm.vec3(0,1,0))
-        lx = 2*np.cos(th)
-        lz = 2*np.sin(th)
 
         M = glm.mat4()
 
@@ -276,16 +257,13 @@ def main():
 
         # update uniforms
         MVP = P*V*M
-        glUseProgram(shader_program)
         glUniformMatrix4fv(loc_MVP, 1, GL_FALSE, glm.value_ptr(MVP))
         glUniformMatrix4fv(loc_M, 1, GL_FALSE, glm.value_ptr(M))
         glUniform3f(loc_view_pos, view_pos.x, view_pos.y, view_pos.z)
-        glUniform3f(loc_lightmov,lx,2.,lz)
-
 
         # draw cube w.r.t. the current frame MVP
         glBindVertexArray(vao_cube)
-        glDrawArrays(GL_TRIANGLES, 0, 36)
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
 
         # swap front and back buffers
         glfwSwapBuffers(window)
@@ -298,3 +276,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

@@ -38,12 +38,11 @@ in vec3 vout_normal;  // interpolated normal
 out vec4 FragColor;
 
 uniform vec3 view_pos;
-uniform vec3 lightmove;
 
 void main()
 {
     // light and material properties
-    vec3 light_pos = lightmove;
+    vec3 light_pos = vec3(3,2,4);
     vec3 light_color = vec3(1,1,1);
     vec3 material_color = vec3(1,0,0);
     float material_shininess = 32.0;
@@ -225,7 +224,7 @@ def main():
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE) # for macOS
 
     # create a window and OpenGL context
-    window = glfwCreateWindow(800, 800, '2023008413', None, None)
+    window = glfwCreateWindow(800, 800, '4-all-components-phong-facenorm', None, None)
     if not window:
         glfwTerminate()
         return
@@ -241,7 +240,6 @@ def main():
     loc_MVP = glGetUniformLocation(shader_program, 'MVP')
     loc_M = glGetUniformLocation(shader_program, 'M')
     loc_view_pos = glGetUniformLocation(shader_program, 'view_pos')
-    loc_lightmov = glGetUniformLocation(shader_program, 'lightmove')
 
     # prepare vaos
     vao_cube = prepare_vao_cube()
@@ -266,8 +264,6 @@ def main():
         # rotation
         th = np.radians(t*90)
         R = glm.rotate(th, glm.vec3(0,1,0))
-        lx = 2*np.cos(th)
-        lz = 2*np.sin(th)
 
         M = glm.mat4()
 
@@ -280,8 +276,6 @@ def main():
         glUniformMatrix4fv(loc_MVP, 1, GL_FALSE, glm.value_ptr(MVP))
         glUniformMatrix4fv(loc_M, 1, GL_FALSE, glm.value_ptr(M))
         glUniform3f(loc_view_pos, view_pos.x, view_pos.y, view_pos.z)
-        glUniform3f(loc_lightmov,lx,2.,lz)
-
 
         # draw cube w.r.t. the current frame MVP
         glBindVertexArray(vao_cube)
