@@ -39,13 +39,13 @@ out vec4 FragColor;
 
 uniform vec3 view_pos;
 uniform vec3 lightmove;
+uniform vec3 material_color;
 
 void main()
 {
     // light and material properties
     vec3 light_pos = lightmove;
     vec3 light_color = vec3(1,1,1);
-    vec3 material_color = vec3(1,0,0);
     float material_shininess = 32.0;
 
     // light components
@@ -242,6 +242,7 @@ def main():
     loc_M = glGetUniformLocation(shader_program, 'M')
     loc_view_pos = glGetUniformLocation(shader_program, 'view_pos')
     loc_lightmov = glGetUniformLocation(shader_program, 'lightmove')
+    loc_materialcolor = glGetUniformLocation(shader_program, 'material_color')
 
     # prepare vaos
     vao_cube = prepare_vao_cube()
@@ -281,6 +282,8 @@ def main():
         glUniformMatrix4fv(loc_M, 1, GL_FALSE, glm.value_ptr(M))
         glUniform3f(loc_view_pos, view_pos.x, view_pos.y, view_pos.z)
         glUniform3f(loc_lightmov,lx,2.,lz)
+        glUniform3f(loc_materialcolor,1,0,0)
+
 
 
         # draw cube w.r.t. the current frame MVP
