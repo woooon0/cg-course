@@ -5,7 +5,7 @@ import ctypes
 import numpy as np
 
 g_cam_theta = 90 
-g_cam_pi = -90    ## 0,0,-1 == initial camera point
+g_cam_pi = 90   
 g_cmove_offset = glm.vec3(0.,0.,0.)
 g_l_xyz = glm.vec3(0.,0.,0.) # initial lookat point
 g_c_u = glm.vec3()
@@ -244,22 +244,15 @@ def prepare_vao_lines(grid_size=10, grid_spacing=1.0):
 class Model:
     def __init__(self, vertices, indices):
         self.index_count = len(indices)
-
         self.vao = glGenVertexArrays(1)
         self.vbo = glGenBuffers(1)
-
         glBindVertexArray(self.vao)
-
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER,vertices, GL_STATIC_DRAW)
-
-
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, None)
         glEnableVertexAttribArray(0)
-
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24,  ctypes.c_void_p(3*np.dtype(np.float32).itemsize))
         glEnableVertexAttribArray(1)
- 
     def draw(self):
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES,0, self.index_count)
@@ -269,6 +262,9 @@ def load_obj(path):
     normals = []
     indices = []
     normindices = []
+    indice3 = 0
+    indice4 = 0
+    indicemore = 0
 
     with open(path, 'r') as f:
         for line in f:
@@ -280,29 +276,55 @@ def load_obj(path):
                 parts = line.strip().split()
                 normal = list(map(float, parts[1:4]))
                 normals.extend(normal)
-            elif line.startswith('f '):  # 면 정보
+            elif line.startswith('f '):  
                 parts = line.strip().split()[1:]
-                face = [int(p.split('//')[0]) - 1 for p in parts]
-                nface = [int(p.split('//')[1]) - 1 for p in parts]
+                if "//" in parts[0]:
+                    face = [int(p.split('//')[0]) - 1 for p in parts]
+                    nface = [int(p.split('//')[1]) - 1 for p in parts]  
+                    if len(face) == 3:
+                        indices.extend(face)
+                        normindices.extend(nface)
+                        indice3 += 1
+                    elif len(face) == 4:  
+                        indices.extend([face[0], face[1], face[2]])  
+                        indices.extend([face[0], face[2], face[3]])  
+                        normindices.extend([nface[0], nface[1], nface[2]])  
+                        normindices.extend([nface[0], nface[2], nface[3]])  
+                        indice4 += 2
+                    elif len(face) > 4:  
+                        for i in range(1, len(face) - 1):
+                            indices.extend([face[0], face[i], face[i + 1]])
+                            normindices.extend([nface[0], nface[i], nface[i + 1]])
+                            indicemore += 1
+                elif "/" in parts[0]:
+                    face = [int(p.split('/')[0]) - 1 for p in parts]
+                    nface = [int(p.split('/')[2]) - 1 for p in parts]  
+                    if len(face) == 3:
+                        indices.extend(face)
+                        normindices.extend(nface)
+                        indice3 += 1
+                    elif len(face) == 4:
+                        indices.extend([face[0], face[1], face[2]])
+                        indices.extend([face[0], face[2], face[3]])
+                        normindices.extend([nface[0], nface[1], nface[2]])
+                        normindices.extend([nface[0], nface[2], nface[3]])
+                        indice4 += 2
+                    elif len(face) > 4:
+                        for i in range(1, len(face) - 1):
+                            indices.extend([face[0], face[i], face[i + 1]])
+                            normindices.extend([nface[0], nface[i], nface[i + 1]])
+                            indicemore += 1
 
-                if len(face) == 3:  # 삼각형
-                    indices.extend(face)
-                    normindices.extend(nface)
-                elif len(face) == 4:  # 사각형
-                    indices.extend([face[0], face[1], face[2]])  # 첫 번째 삼각형
-                    indices.extend([face[0], face[2], face[3]])  # 두 번째 삼각형
-                    normindices.extend([nface[0], nface[1], nface[2]])  # 첫 번째 삼각형 노멀
-                    normindices.extend([nface[0], nface[2], nface[3]])  # 두 번째 삼각형 노멀
-                elif len(face) > 4:  # 다각형 -> 삼각형 팬 방식으로 분할
-                    for i in range(1, len(face) - 1):
-                        indices.extend([face[0], face[i], face[i + 1]])
-                        normindices.extend([nface[0], nface[i], nface[i + 1]])
+
 
     vertices = np.array(vertices, dtype=np.float32)
     normals = np.array(normals, dtype=np.float32)
     indices = np.array(indices, dtype=np.uint32)
     normindices = np.array(normindices, dtype=np.uint32)
-
+    print("faces: ", indice3 + indice4 + indicemore)
+    print("face with 3 vertices: ", indice3)
+    print("face with 4 vertices: ", indice4)
+    print("face with more than 4 vertices: ", indicemore)
     return vertices, normals, indices, normindices
 
 def drop_callback(window, paths):
@@ -311,13 +333,12 @@ def drop_callback(window, paths):
     print(name)
     vertices, normals, indices, normindices = load_obj(paths[0])
     vn = []
-    print(len(indices))
     for i in range(len(indices)):
         vn.extend(vertices[3*indices[i]:3*indices[i]+3])
         vn.extend(normals[3*normindices[i]:3*normindices[i]+3])
     vertices = np.array(vn,dtype=np.float32)
     indices = np.array(indices,dtype=np.uint32)
-    for i in range(0, len(vertices), 6):  # 각 정점의 x좌표를 이동
+    for i in range(0, len(vertices), 6):  # x좌표 +2D
         vertices[i] += g_model_offset_x
     model = Model(vertices, indices)
     g_models.append(model)
@@ -478,7 +499,7 @@ def main():
 
 
         # projection matrix
-        P = glm.perspective(45.,1,0.01,100)
+        P = glm.perspective(45.,1,0.01,100000)
         #P = glm.ortho(-5,5, -5,5, -100,100)
 
 
@@ -492,7 +513,7 @@ def main():
 
         corigin = g_dist*glm.vec3(np.sin(theta)*np.cos(pi),np.cos(theta),np.sin(theta)*np.sin(pi)) + g_cmove_offset
 
-        lightpos = glm.vec3(0,10,0)
+        lightpos = glm.vec3(0,1000,0)
 
 
 
@@ -512,12 +533,7 @@ def main():
             V = glm.lookAt(crev, lookpoint, -upvec)
             I = glm.rotate(glm.mat4(1.0), glm.radians(180),glm.vec3(0,1,0))
             corigin = g_dist*glm.vec3(np.sin(theta)*np.cos(pi),np.cos(theta),np.sin(theta)*np.sin(pi)) -g_cmove_offset
-            # rotation_y = glm.mat3(
-            # np.cos(np.pi), 0, np.sin(np.pi),
-            # 0, 1, 0,
-            # -np.sin(np.pi), 0, np.cos(np.pi)
-            # )
-            # corigin = rotation_y*corigin-g_cmove_offset
+
             
         else:
             V = glm.lookAt(corigin, lookpoint, upvec)
