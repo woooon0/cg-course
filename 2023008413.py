@@ -357,6 +357,12 @@ def button_callback(window, button, action, mod):
                 g_mod_toggle = 2
             elif glfwGetKey(window,GLFW_KEY_LEFT_ALT)==GLFW_PRESS:
                 g_mod_toggle = 3
+            elif glfwGetKey(window,GLFW_KEY_Q)==GLFW_PRESS:
+                g_mod_toggle = 1
+            elif glfwGetKey(window,GLFW_KEY_W)==GLFW_PRESS:
+                g_mod_toggle = 2
+            elif glfwGetKey(window,GLFW_KEY_E)==GLFW_PRESS:
+                g_mod_toggle = 3
             g_init_point = list(glfwGetCursorPos(window))
             g_m_left = True
             if g_is_rev == True:
@@ -440,10 +446,10 @@ def cursor_callback(window, xpos, ypos):
 # def scroll_callback(window, xoffset, yoffset):
 #     print('mouse wheel scroll: %d, %d'%(xoffset, yoffset))
 
-# def key_callback(window, key, scancode, action, mods):
-#     global g_cam_height,g_cam_ang
-#     if key==GLFW_KEY_ESCAPE and action==GLFW_PRESS:
-#         glfwSetWindowShouldClose(window, GLFW_TRUE)
+def key_callback(window, key, scancode, action, mods):
+    
+    if key==GLFW_KEY_ESCAPE and action==GLFW_PRESS:
+        glfwSetWindowShouldClose(window, GLFW_TRUE)
 
             
             
