@@ -32,7 +32,7 @@ q = queue()
 for i in range(1, n+1):
     q.enqueue(i)
 
-for i in range(k):
+while q.size() > 1:
     for j in range(k-1):
         q.enqueue(q.front())
         q.dequeue()
