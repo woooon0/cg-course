@@ -1,31 +1,12 @@
-from collections import deque
+from OpenGL.GL import *
+from glfw.GLFW import *
+import glm
+import ctypes
+import numpy as np
 
-class queue:
-    def __init__(self):
-        self.queue = deque()
+g_cam_ang = 0.
+g_cam_height = .1
 
-<<<<<<< HEAD
-    def enqueue(self, item):
-        self.queue.append(item)
-
-    def dequeue(self):
-        if not self.is_empty():
-            return self.queue.popleft()
-        else:
-            raise IndexError("empty queue")
-
-    def front(self):
-        if not self.is_empty():
-            return self.queue[0]
-        else:
-            raise IndexError("empty queue")
-
-    def is_empty(self):
-        return len(self.queue) == 0
-
-    def size(self):
-        return len(self.queue)
-=======
 g_vertex_shader_src_color_attribute = '''
 #version 330 core
 
@@ -122,25 +103,44 @@ class Node:
 def load_shaders(vertex_shader_source, fragment_shader_source):
     # build and compile our shader program
     # ------------------------------------
->>>>>>> a637054df2092929fc0835c7d19921500d5d08cc
     
+    # vertex shader 
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER)    # create an empty shader object
+    glShaderSource(vertex_shader, vertex_shader_source) # provide shader source code
+    glCompileShader(vertex_shader)                      # compile the shader object
     
-n, k = map(int, input().split())
-q = queue()
+    # check for shader compile errors
+    success = glGetShaderiv(vertex_shader, GL_COMPILE_STATUS)
+    if (not success):
+        infoLog = glGetShaderInfoLog(vertex_shader)
+        print("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" + infoLog.decode())
+        
+    # fragment shader
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER)    # create an empty shader object
+    glShaderSource(fragment_shader, fragment_shader_source) # provide shader source code
+    glCompileShader(fragment_shader)                        # compile the shader object
+    
+    # check for shader compile errors
+    success = glGetShaderiv(fragment_shader, GL_COMPILE_STATUS)
+    if (not success):
+        infoLog = glGetShaderInfoLog(fragment_shader)
+        print("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" + infoLog.decode())
 
-for i in range(1, n+1):
-    q.enqueue(i)
+    # link shaders
+    shader_program = glCreateProgram()               # create an empty program object
+    glAttachShader(shader_program, vertex_shader)    # attach the shader objects to the program object
+    glAttachShader(shader_program, fragment_shader)
+    glLinkProgram(shader_program)                    # link the program object
 
-while q.size() > 1:
-    for j in range(k-1):
-        q.enqueue(q.front())
-        q.dequeue()
-    print(q.front(), end=" ")
-    q.dequeue()
+    # check for linking errors
+    success = glGetProgramiv(shader_program, GL_LINK_STATUS)
+    if (not success):
+        infoLog = glGetProgramInfoLog(shader_program)
+        print("ERROR::SHADER::PROGRAM::LINKING_FAILED\n" + infoLog.decode())
+        
+    glDeleteShader(vertex_shader)
+    glDeleteShader(fragment_shader)
 
-<<<<<<< HEAD
-print(q.front(),end=" ")
-=======
     return shader_program    # return the shader program
 
 
@@ -248,7 +248,7 @@ def main():
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE) # for macOS
 
     # create a window and OpenGL context
-    window = glfwCreateWindow(800, 800, '2023008413', None, None)
+    window = glfwCreateWindow(800, 800, '1-hierarchical', None, None)
     if not window:
         glfwTerminate()
         return
@@ -272,14 +272,8 @@ def main():
 
     # create a hirarchical model - Node(parent, link_transform_from_parent, shape_transform, color)
     base = Node(None, glm.mat4(), glm.scale((.2,.2,0.)), glm.vec3(0,0,1))
-    arm1 = Node(base, glm.translate(glm.vec3(.2,0,0)), glm.translate((.25,0,.01)) * glm.scale((.25,.1,0.)), glm.vec3(1,0,0))
-    arm2 = Node(arm1, glm.translate(glm.vec3(.5,0,0.1)), glm.translate((.25,0,.01)) * glm.scale((.25,.1,0.)), glm.vec3(0,1,0))
-    arm3 = Node(base, glm.translate(glm.vec3(-.2,0,0)), glm.translate((-.25,0,.01)) * glm.scale((.25,.1,0.)), glm.vec3(1,0,0))
-    arm4 = Node(arm3, glm.translate(glm.vec3(-.5,0,0.1)), glm.translate((-.25,0,.01)) * glm.scale((.25,.1,0.)), glm.vec3(0,1,0))
+    arm = Node(base, glm.translate(glm.vec3(.2,0,0)), glm.translate((.5,0,.01)) * glm.scale((.5,.1,0.)), glm.vec3(1,0,0))
 
-
-
-    
     # loop until the user closes the window
     while not glfwWindowShouldClose(window):
         # enable depth test (we'll see details later)
@@ -301,11 +295,7 @@ def main():
 
         # set local transformations of each node
         base.set_joint_transform(glm.translate((glm.sin(t),0,0)))
-        arm1.set_joint_transform(glm.rotate(t, (0,0,1)))
-        arm2.set_joint_transform(glm.rotate(t, (0,0,1)))
-        arm3.set_joint_transform(glm.rotate(t, (0,0,-1)))
-        arm4.set_joint_transform(glm.rotate(t, (0,0,-1)))
-
+        arm.set_joint_transform(glm.rotate(t, (0,0,1)))
 
         # recursively update global transformations of all nodes
         base.update_tree_global_transform()
@@ -313,11 +303,7 @@ def main():
         # draw nodes
         glUseProgram(shader_for_box)
         draw_node(vao_box, base, P*V, loc_MVP_box, loc_color_box)
-        draw_node(vao_box, arm1, P*V, loc_MVP_box, loc_color_box)
-        draw_node(vao_box, arm2, P*V, loc_MVP_box, loc_color_box)
-        draw_node(vao_box, arm3, P*V, loc_MVP_box, loc_color_box)
-        draw_node(vao_box, arm4, P*V, loc_MVP_box, loc_color_box)
-
+        draw_node(vao_box, arm, P*V, loc_MVP_box, loc_color_box)
 
 
         # swap front and back buffers
@@ -333,4 +319,3 @@ if __name__ == "__main__":
     main()
 
 
->>>>>>> a637054df2092929fc0835c7d19921500d5d08cc
