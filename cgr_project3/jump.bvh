@@ -9,11 +9,11 @@ ROOT hip
     CHANNELS 3 Zrotation Xrotation Yrotation
     JOINT chest
     {
-      OFFSET 0 11.7043 -0.48768
+      OFFSET 0 12.7043 -0.48768
       CHANNELS 3 Zrotation Xrotation Yrotation
       JOINT neck
       {
-        OFFSET 0 22.1894 -2.19456
+        OFFSET 0 32.1894 -2.19456
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT head
         {
@@ -41,7 +41,7 @@ ROOT hip
       }
       JOINT rCollar
       {
-        OFFSET -2.68224 19.2634 -4.8768
+        OFFSET -8.68224 29.2634 -4.8768
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT rShldr
         {
@@ -131,7 +131,7 @@ ROOT hip
       }
       JOINT lCollar
       {
-        OFFSET 2.68224 19.2634 -4.8768
+        OFFSET 8.68224 29.2634 -4.8768
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT lShldr
         {
@@ -223,15 +223,15 @@ ROOT hip
   }
   JOINT rButtock
   {
-    OFFSET -8.77824 4.35084 1.2192
+    OFFSET -10.77824 4.35084 1.2192
     CHANNELS 3 Zrotation Xrotation Yrotation
     JOINT rThigh
     {
-      OFFSET 0 -1.70687 -2.19456
+      OFFSET 0 -5.70687 -2.19456
       CHANNELS 3 Zrotation Xrotation Yrotation
       JOINT rShin
       {
-        OFFSET 0 -36.8199 0.73152
+        OFFSET 0 -40.8199 0.73152
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT rFoot
         {
@@ -247,15 +247,15 @@ ROOT hip
   }
   JOINT lButtock
   {
-    OFFSET 8.77824 4.35084 1.2192
+    OFFSET 10.77824 4.35084 1.2192
     CHANNELS 3 Zrotation Xrotation Yrotation
     JOINT lThigh
     {
-      OFFSET 0 -1.70687 -2.19456
+      OFFSET 0 -5.70687 -2.19456
       CHANNELS 3 Zrotation Xrotation Yrotation
       JOINT lShin
       {
-        OFFSET 0 -36.8199 0.73152
+        OFFSET 0 -40.8199 0.73152
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT lFoot
         {

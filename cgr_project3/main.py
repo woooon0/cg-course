@@ -453,12 +453,21 @@ def obj1_callback():
     g_motion_active = False
     print("bvh loaded")
 
-    # file = os.path.join('hip.obj')
-    # appendmodel(file,'hip')
-    # file = os.path.join('abdomen.obj')
-    # appendmodel(file,'abdomen')
-    # file = os.path.join('chest.obj')
-    # appendmodel(file,'chest')
+
+    file = os.path.join('head.obj')
+    appendmodel(file,'head',g_bvhroot)    
+    file = os.path.join('neck.obj')
+    appendmodel(file,'neck',g_bvhroot)   
+    file = os.path.join('lCollar.obj')
+    appendmodel(file,'lCollar',g_bvhroot)
+    file = os.path.join('rCollar.obj')
+    appendmodel(file,'rCollar',g_bvhroot)      
+    file = os.path.join('hip.obj')
+    appendmodel(file,'hip',g_bvhroot)
+    file = os.path.join('abdomen.obj')
+    appendmodel(file,'abdomen',g_bvhroot)
+    file = os.path.join('chest.obj')
+    appendmodel(file,'chest',g_bvhroot)
     file = os.path.join('rFoot.obj')
     appendmodel(file,'rFoot',g_bvhroot)
     file = os.path.join('lFoot.obj')
@@ -467,15 +476,28 @@ def obj1_callback():
     appendmodel(file,'rShin',g_bvhroot)
     file = os.path.join('lShin.obj')
     appendmodel(file,'lShin',g_bvhroot)    
-    # file = os.path.join('lThigh.obj')
-    # appendmodel(file,'lThigh')    
-    # file = os.path.join('rThigh.obj')
-    # appendmodel(file,'rThigh')    
-    # file = os.path.join('lButtock.obj')
-    # appendmodel(file,'lButtock')    
-    # file = os.path.join('rButtock.obj')
-    # appendmodel(file,'rButtock')    
+    file = os.path.join('lThigh.obj')
+    appendmodel(file,'lThigh',g_bvhroot)    
+    file = os.path.join('rThigh.obj')
+    appendmodel(file,'rThigh',g_bvhroot)    
+    file = os.path.join('lButtock.obj')
+    appendmodel(file,'lButtock',g_bvhroot)    
+    file = os.path.join('rButtock.obj')
+    appendmodel(file,'rButtock',g_bvhroot)    
+    file = os.path.join('lShldr.obj')
+    appendmodel(file,'lShldr',g_bvhroot)    
+    file = os.path.join('lForeArm.obj')
+    appendmodel(file,'lForeArm',g_bvhroot)   
+    file = os.path.join('rShldr.obj')
+    appendmodel(file,'rShldr',g_bvhroot)    
+    file = os.path.join('rForeArm.obj')
+    appendmodel(file,'rForeArm',g_bvhroot) 
+    file = os.path.join('rHand.obj')
+    appendmodel(file,'rHand',g_bvhroot)    
+    file = os.path.join('lHand.obj')
+    appendmodel(file,'lHand',g_bvhroot) 
     setup_all_obj_transforms(g_bvhroot)
+
 
 class Joint:
     def __init__(self, name):
@@ -501,14 +523,14 @@ class Joint:
 
 def set_bone_local_transform(joint):
     if joint.parent is not None:
-        start = np.zeros(3)
+        start = np.array([0,0,0], dtype=np.float32)
         end = joint.offset
         direction = end - start
         length = np.linalg.norm(direction)
         if length < 1e-6:
             joint.bone_local_transform = glm.mat4(1.0)
             return
-        center = (start + end) / 2  # bone의 중간 위치
+        center = (start + end) / 2 
 
         y = np.array([0, 1, 0], dtype=np.float32)
         direction_n = direction / length
@@ -519,19 +541,21 @@ def set_bone_local_transform(joint):
             R = glm.rotate(glm.mat4(1.0), angle, glm.vec3(*axis))
         S = glm.scale(glm.mat4(1.0), glm.vec3(g_bonesize, length, g_bonesize))
         T = glm.translate(glm.mat4(1.0), glm.vec3(*center))
-        joint.bone_local_transform = T * R * S
+        joint.bone_local_transform = T*R*S
     else:
         joint.bone_local_transform = glm.mat4(1.0)
+
+
 def set_obj_local_transform(joint):
     if joint.parent is not None:
-        start = np.zeros(3)
+        start = np.array([0,0,0], dtype=np.float32)
         end = joint.offset
         direction = end - start
         length = np.linalg.norm(direction)
         if length < 1e-6:
             joint.obj_local_transform = glm.mat4(1.0)
             return
-        center = (start + end) / 2  # bone의 중간 위치
+        center = (start + end) / 2  
 
         y = np.array([0, 1, 0], dtype=np.float32)
         direction_n = direction / length
@@ -541,16 +565,16 @@ def set_obj_local_transform(joint):
         if np.linalg.norm(axis) > 1e-6 and angle > 1e-6:
             R = glm.rotate(glm.mat4(1.0), angle, glm.vec3(*axis))
         T = glm.translate(glm.mat4(1.0), glm.vec3(*center))
-        joint.obj_local_transform = T * R
+        joint.obj_local_transform=T*R
     else:
-        joint.obj_local_transform = glm.mat4(1.0)
+        joint.obj_local_transform=glm.mat4(1.0)
 
-def setup_all_bone_transforms(joint):  #본용
+def setup_all_bone_transforms(joint): 
     set_bone_local_transform(joint)
     for child in joint.children:
         setup_all_bone_transforms(child)
 
-def setup_all_obj_transforms(joint):  #obj용
+def setup_all_obj_transforms(joint):  
     set_obj_local_transform(joint)
     for child in joint.children:
         setup_all_obj_transforms(child)
@@ -594,7 +618,7 @@ def draw_bvh_obj(parent_transform,joint,loc_MVP,MVP):
     M = parent_transform * joint.obj_local_transform
     M = MVP * M
     glUniformMatrix4fv(loc_MVP, 1, GL_FALSE, glm.value_ptr(M))
-    joint.obj.draw()
+    joint.parent.obj.draw()
 
 
 def draw_bvh_objects(joint, parent_transform, frame_data, loc_MVP, MVP):
@@ -617,7 +641,7 @@ def draw_bvh_objects(joint, parent_transform, frame_data, loc_MVP, MVP):
     world_transform = parent_transform * T
     if joint.parent is not None:
         if joint.parent.children[0] == joint:
-            if joint.obj is not None:
+            if joint.parent.obj is not None:
                 draw_bvh_obj(parent_transform, joint, loc_MVP, MVP)
 
     for child in joint.children:
@@ -655,7 +679,6 @@ def parse_bvh(path):
             joint = Joint(joint_name)
             if stack:
                 stack[-1].add_child(joint)
-                
             stack.append(joint)
             if rootnode is None:
                 rootnode = joint
@@ -673,7 +696,7 @@ def parse_bvh(path):
         elif words[0] == 'CHANNELS':
             channels = words[2:]
             stack[-1].channels = channels
-            stack[-1].channel_indices = list(range(channel_index, channel_index + len(channels)))
+            stack[-1].channel_indices = list(range(channel_index,channel_index+len(channels)))
             channel_index += len(channels)
         elif words[0] == 'Frames:':
             g_num_frame = int(words[1])
@@ -687,7 +710,7 @@ def parse_bvh(path):
 
 
 def bvhdrop_callback(window, paths):
-    global  g_bvhroot, g_motion_data, g_current_frame, g_motion_active
+    global  g_bvhroot, g_motion_data, g_current_frame, g_motion_active, g_ispreloaded
     bvhfile = paths[0]
     g_bvhroot,rootnum = parse_bvh(bvhfile)
 
@@ -699,6 +722,7 @@ def bvhdrop_callback(window, paths):
     g_bvhroot.printall()
     g_current_frame = 0
     g_motion_active = False
+    g_ispreloaded = False
     print("bvh loaded")
 
 
@@ -860,8 +884,12 @@ def main():
     # get uniform locations
     loc_MVP = glGetUniformLocation(shader_program, 'MVP')
     loc_M = glGetUniformLocation(shader_program, 'M')
+    loc_MVP_cubes = glGetUniformLocation(cubes_program, 'MVP')
+    loc_M_cubes = glGetUniformLocation(cubes_program, 'M')
     loc_view_pos = glGetUniformLocation(shader_program, 'view_pos')
     loc_lightmov = glGetUniformLocation(shader_program, 'lightmove')
+    loc_view_pos_cubes = glGetUniformLocation(cubes_program, 'view_pos')
+    loc_lightmov_cubes = glGetUniformLocation(cubes_program, 'lightmove')
     loc_materialcolor = glGetUniformLocation(shader_program, 'material_color')
     
     # prepare vaos
@@ -937,7 +965,8 @@ def main():
                 elap_time = 0
                 if g_num_frame == g_current_frame:
                     g_current_frame = 0
-                print(g_current_frame)
+                
+        glUniform3f(loc_materialcolor,0.5,0.5,0.5)
 
         glUseProgram(cubes_program)
         if g_ispreloaded:
@@ -945,17 +974,12 @@ def main():
             frame_data = g_motion_data[g_current_frame] if g_motion_active else None
             draw_bvh_objects(g_bvhroot, glm.mat4(1.0), frame_data, loc_MVP,MVP)
         elif g_bvhroot:
+            glUniformMatrix4fv(loc_MVP_cubes, 1, GL_FALSE, glm.value_ptr(MVP))
+            glUniformMatrix4fv(loc_M_cubes, 1, GL_FALSE, glm.value_ptr(M))
+            glUniform3f(loc_view_pos_cubes, corigin.x,corigin.y,corigin.z)
+            glUniform3f(loc_lightmov_cubes,lightpos.x,lightpos.y,lightpos.z)
             frame_data = g_motion_data[g_current_frame] if g_motion_active else None
             draw_bvh_cubes(g_bvhroot, glm.mat4(1.0), frame_data, loc_MVP,cube_vao, MVP)
-
-
-        # T = glm.translate(lookpoint)
-        # MVP2 = MVP*T
-
-        # glUniformMatrix4fv(loc_MVP, 1, GL_FALSE, glm.value_ptr(MVP2))
-        # glBindVertexArray(vao_3dsquare)
-        # glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,None)
-
 
 
         # swap front and back buffers
